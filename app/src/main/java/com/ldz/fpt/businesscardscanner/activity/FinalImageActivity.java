@@ -47,17 +47,17 @@ public class FinalImageActivity extends AppCompatActivity {
         imageView = (ImageView) findViewById(R.id.imv_image);
     }
 
-    private long getNativepix() {
-        Pix p = ReadFile.readBitmap(cropImage);
-        final long pixPixelCount = p.getWidth() * p.getHeight();
-        if (pixPixelCount < MIN_PIXEL_COUNT) {
-            double scale = Math.sqrt(((double) MIN_PIXEL_COUNT) / pixPixelCount);
-            Pix scaledPix = Scale.scale(p, (float) scale);
-            if (scaledPix.getNativePix() != 0) {
-                p.recycle();
-                p = scaledPix;
-            }
-        }
-        return p.getNativePix();
-    }
+//    private long getNativepix() {
+//        Pix p = ReadFile.readBitmap(cropImage);
+//        final long pixPixelCount = p.getWidth() * p.getHeight();
+//        if (pixPixelCount < MIN_PIXEL_COUNT) {
+//            double scale = Math.sqrt(((double) MIN_PIXEL_COUNT) / pixPixelCount);
+//            Pix scaledPix = Scale.scale(p, (float) scale);
+//            if (scaledPix.getNativePix() != 0) {
+//                p.recycle();
+//                p = scaledPix;
+//            }
+//        }
+//        return p.getNativePix();
+//    }
 }
