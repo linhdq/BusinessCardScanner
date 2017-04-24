@@ -102,7 +102,7 @@ public class CropImageActivity extends AppCompatActivity implements CropImageVie
                 imvImage.getCroppedImageAsync();
                 break;
             case R.id.item_rotate:
-
+                imvImage.rotateImage(90);
                 break;
             default:
                 break;
