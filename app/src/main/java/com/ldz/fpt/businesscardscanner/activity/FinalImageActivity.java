@@ -36,6 +36,12 @@ public class FinalImageActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+    }
+
     private void init() {
         //view
         imageView = (ImageView) findViewById(R.id.imv_image);
