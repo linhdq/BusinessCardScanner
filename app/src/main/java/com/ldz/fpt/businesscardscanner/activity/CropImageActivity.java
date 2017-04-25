@@ -92,7 +92,6 @@ public class CropImageActivity extends AppCompatActivity implements CropImageVie
             finish();
             overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
         }
-        Toast.makeText(this, "Image is cropped", Toast.LENGTH_SHORT).show();
     }
 
     @Override

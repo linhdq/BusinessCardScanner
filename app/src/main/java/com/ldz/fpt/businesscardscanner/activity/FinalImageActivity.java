@@ -1,11 +1,16 @@
 package com.ldz.fpt.businesscardscanner.activity;
 
+import android.app.ProgressDialog;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.ldz.fpt.businesscardscanner.R;
@@ -22,14 +27,18 @@ public class FinalImageActivity extends AppCompatActivity {
     private static final int MIN_PIXEL_COUNT = 3 * 1024 * 1024;
     //view
     private ImageView imageView;
+    private TextView txtResult;
+    private ScrollView scrollView;
+    private ProgressDialog progressDialog;
     //
     public static Bitmap cropImage;
+    //calculate time execute
+    private long timeStart;
+    private long timeEnd;
+    private int totalTimeExecute;
     //
-    private long nativePix;
-    // OCR
-    private TessBaseAPI mTess;
-    private String datapath;
-    private String language;
+    private String languageCode;
+    private boolean isFinished;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,11 +51,12 @@ public class FinalImageActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (cropImage != null) {
+        if (cropImage != null && !isFinished) {
+            //start count time execute
+            timeStart = System.currentTimeMillis();
+            //
             imageView.setImageBitmap(cropImage);
-            checkFile(new File(datapath + "tessdata/"));
-            mTess.init(datapath, language);
-            processImage();
+            new OCRProcessingImage().execute(cropImage);
         }
     }
 
@@ -59,27 +69,18 @@ public class FinalImageActivity extends AppCompatActivity {
     private void init() {
         //view
         imageView = (ImageView) findViewById(R.id.imv_image);
+        txtResult = (TextView) findViewById(R.id.txt_result);
+        scrollView = (ScrollView) findViewById(R.id.layout_result);
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.setMessage("Processing image ...");
         // OCR
-        language = "eng";
-        datapath = getFilesDir()+ "/tesseract/";
-        mTess = new TessBaseAPI();
+        languageCode = "eng";
+        //
+        isFinished = false;
     }
 
-//    private long getNativepix() {
-//        Pix p = ReadFile.readBitmap(cropImage);
-//        final long pixPixelCount = p.getWidth() * p.getHeight();
-//        if (pixPixelCount < MIN_PIXEL_COUNT) {
-//            double scale = Math.sqrt(((double) MIN_PIXEL_COUNT) / pixPixelCount);
-//            Pix scaledPix = Scale.scale(p, (float) scale);
-//            if (scaledPix.getNativePix() != 0) {
-//                p.recycle();
-//                p = scaledPix;
-//            }
-//        }
-//        return p.getNativePix();
-//    }
-
-    private void copyFiles() {
+    private void copyFiles(String datapath) {
         try {
             String filepath = datapath + "/tessdata/eng.traineddata";
             AssetManager assetManager = getAssets();
@@ -105,25 +106,52 @@ public class FinalImageActivity extends AppCompatActivity {
         }
     }
 
-    private void checkFile(File dir) {
+    private void checkFile(File dir, String datapath) {
         //directory does not exist, but we can successfully create it
-        if (!dir.exists()&& dir.mkdirs()){
-            copyFiles();
+        if (!dir.exists() && dir.mkdirs()) {
+            copyFiles(datapath);
         }
         //The directory exists, but there is no data file in it
-        if(dir.exists()) {
-            String datafilepath = datapath+ "/tessdata/eng.traineddata";
+        if (dir.exists()) {
+            String datafilepath = datapath + "/tessdata/eng.traineddata";
             File datafile = new File(datafilepath);
             if (!datafile.exists()) {
-                copyFiles();
+                copyFiles(datapath);
             }
         }
     }
 
-    public void processImage(){
-        String OCRresult = "";
-        mTess.setImage(cropImage);
-        OCRresult = mTess.getUTF8Text();
-        Log.d(TAG, OCRresult);
+    private class OCRProcessingImage extends AsyncTask<Bitmap, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(Bitmap... params) {
+            String datapath = getFilesDir() + "/tesseract/";
+            TessBaseAPI mTess = new TessBaseAPI();
+            checkFile(new File(datapath + "tessdata/"), datapath);
+            mTess.init(datapath, languageCode);
+            mTess.setImage(params[0]);
+            return mTess.getUTF8Text();
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            //end count time execute
+            timeEnd = System.currentTimeMillis();
+            totalTimeExecute = (int) ((timeEnd - timeStart) / 1000);
+            s = String.format("Time execute: %d seconds\n", totalTimeExecute) + s;
+            //
+            txtResult.setText(s);
+            scrollView.setVisibility(View.VISIBLE);
+            progressDialog.dismiss();
+            isFinished = true;
+        }
     }
+
 }
